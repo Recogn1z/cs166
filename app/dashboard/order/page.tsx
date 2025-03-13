@@ -46,7 +46,7 @@ export default function PlaceOrder() {
     }
 
     const itemsInOrder = Object.entries(order)
-      .filter(([_, qty]) => qty > 0)
+      .filter(([, qty]) => qty > 0)
       .map(([itemName, quantity]) => ({ itemName, quantity }));
 
     if (itemsInOrder.length === 0) {
