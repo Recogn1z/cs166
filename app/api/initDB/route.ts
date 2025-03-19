@@ -1,22 +1,29 @@
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
-import path from "path";
+import { connectDB } from "@/app/api/db";
 import fs from "fs";
+import path from "path";
+import { NextResponse } from "next/server";
 
-export async function connectDB() {
-  let dbPath: string;
+export async function GET() {
+  try {
+    const db = await connectDB();
 
-  if (process.env.NODE_ENV === "production") {
-    dbPath = "/tmp/database.db";
-    if (!fs.existsSync(dbPath)) {
-      fs.writeFileSync(dbPath, "");
+    const schemaPath = path.join(process.cwd(), "schema.sql");
+
+    if (!fs.existsSync(schemaPath)) {
+      return NextResponse.json(
+        { error: "schema.sql not found" },
+        { status: 500 }
+      );
     }
-  } else {
-    dbPath = path.join(process.cwd(), "mydb.sqlite");
-  }
 
-  return open({
-    filename: dbPath,
-    driver: sqlite3.Database,
-  });
+    const schemaSQL = fs.readFileSync(schemaPath, "utf-8");
+    await db.exec(schemaSQL);
+
+    return NextResponse.json({ message: "Database initialized successfully!" });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
 }
