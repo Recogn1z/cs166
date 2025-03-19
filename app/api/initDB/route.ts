@@ -1,22 +1,22 @@
-import { connectDB } from "../db";
-import fs from "fs";
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
 import path from "path";
+import fs from "fs";
 
-export async function GET() {
-  try {
-    const db = await connectDB();
+export async function connectDB() {
+  let dbPath: string;
 
-    const schemaPath = path.join(process.cwd(), "schema.sql");
-    const schemaSQL = fs.readFileSync(schemaPath, "utf-8");
-
-    await db.exec(schemaSQL);
-
-    return Response.json({ message: "Database initialized successfully!" });
-  } catch (error) {
-    console.error("❌ Database initialization failed:", error);
-    return Response.json(
-      { error: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
-    );
+  if (process.env.NODE_ENV === "production") {
+    dbPath = "/tmp/database.db";
+    if (!fs.existsSync(dbPath)) {
+      fs.writeFileSync(dbPath, "");
+    }
+  } else {
+    dbPath = path.join(process.cwd(), "mydb.sqlite");
   }
+
+  return open({
+    filename: dbPath,
+    driver: sqlite3.Database,
+  });
 }
